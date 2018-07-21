@@ -1,0 +1,14 @@
+apps:
+  # app-abc:
+  #   command: node app1.js
+  # app2:
+  #   command: node app2.js
+  app1-nod:
+    image: node
+    command: node app1.js
+  app1-nod-2:
+    command: node app1.js
+  # redis:
+  #   image: redis
+  mongo:
+    image: mongo

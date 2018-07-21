@@ -1,0 +1,40 @@
+{
+  "name": "app-starter",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "argv-split": "^2.0.1",
+    "bluebird": "^3.5.1",
+    "chalk": "^2.4.1",
+    "core-decorators": "^0.20.0",
+    "dockerode": "^2.5.5",
+    "js-yaml": "^3.12.0",
+    "lodash": "^4.17.10",
+    "memoizee": "^0.4.12",
+    "node-pty": "0.7.4",
+    "ps-tree": "^1.1.0",
+    "rxjs": "^6.2.2",
+    "split": "^1.0.1",
+    "terminate": "^2.1.0",
+    "typed-rx-emitter": "^1.1.2",
+    "uuid": "^3.3.2"
+  },
+  "devDependencies": {
+    "@types/bluebird": "^3.5.22",
+    "@types/chalk": "^2.2.0",
+    "@types/dockerode": "^2.5.5",
+    "@types/js-yaml": "^3.11.2",
+    "@types/memoizee": "^0.4.2",
+    "@types/node": "^10.5.2",
+    "@types/uuid": "^3.4.3",
+    "ts-node": "^7.0.0",
+    "typescript": "^2.9.2"
+  }
+}

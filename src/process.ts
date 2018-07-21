@@ -4,13 +4,18 @@ import { Stream } from 'stream';
 type Messages = {
   exit: number,
   started: boolean,
-  killing: boolean,
-  output: Stream
+  killing: 'SIGINT' | 'SIGKILL',
+  output: Stream,
+  error: Error,
 };
 
 export abstract class Process extends Emitter<Messages> {
+  private _ended = false;
+  get ended() {return this._ended; }
+
   constructor() {
     super();
+    this.on('exit').subscribe(() => this._ended = true);
   }
 
   terminate() {

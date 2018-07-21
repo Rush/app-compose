@@ -9,15 +9,9 @@ const termColumns = process.stdout.columns || 80;
 const termRows = process.stdout.rows || 30;
 
 import * as pty from 'node-pty';
-
-const argvSplit = require('argv-split');
+import { Stream, PassThrough } from 'stream';
 
 const shell = platform() === 'win32' ? 'powershell.exe' : '/bin/sh';
-
-const docker = new Docker({
-  Promise: Bluebird as any
-});
-
 
 interface SpawnOptions {
   columns?: number;
@@ -50,13 +44,31 @@ export class NativeProcess extends Process {
 
   async start() {
     this.proc = spawn(this.cwd, this.command, this.options);
+    this.emit('started', true);
+    this.emit('output', this.proc as any as Stream);
+    this.proc.once('exit', exitCode => {
+      this.emit('exit', exitCode);
+    });
   }
 
-  async kill(signal: string) {
-    if(signal === 'SIGINT') {
-      this.emit('killing', true);
+  async kill(signal: 'SIGINT' | 'SIGKILL') {
+    if(this.ended || !this.proc) {
+      return false;
     }
-    await this.cleanup();
+    this.emit('killing', signal);
+    this.proc.kill(signal);
+    if(signal === 'SIGKILL') {
+      await this.cleanup();
+    }
     return true;
   };
+
+  async cleanup() {
+    if(!this.proc || this.ended) {
+      return;
+    }
+    try {
+      await terminate(this.proc.pid);
+    } catch(err) {}
+  }
 };

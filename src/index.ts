@@ -1,4 +1,4 @@
-const chalk = require('chalk');
+import chalk from 'chalk';
 const { readFileSync } = require('fs');
 
 const split = require('split');
@@ -8,6 +8,7 @@ import { createProcess, registerSigInt } from './process-manager';
 import { colorizeName } from './common';
 
 import yaml from 'js-yaml';
+import { onErrorResumeNext } from 'rxjs/operators';
 
 const appSetup = yaml.safeLoad(readFileSync('./app-compose.yaml', 'utf8'));
 const { apps } = appSetup;
@@ -22,10 +23,22 @@ Object.keys(apps).map(async appName => {
 
   const proc = await createProcess(cwd, appEntry);
 
-  await proc.start();
+  proc.on('exit').subscribe(returnCode => {
+    console.log(colorizeName(appName), '...',
+      returnCode === 0 ? chalk.green('done') : chalk.red(`done with error (${returnCode})`)
+    );
+  });
 
-  proc.on('exit').subscribe(() => {
-    console.log(colorizeName(appName), '...', chalk.green('done'));
+  proc.on('started').subscribe(() => {
+    console.log(colorizeName(appName), '...',
+      chalk.whiteBright('started')
+    );
+  });
+
+  proc.on('error').subscribe(error => {
+    console.log(colorizeName(appName), '...',
+      chalk.red('error'), error.message
+    );
   });
 
   proc.on('output').subscribe(stream => {
@@ -40,12 +53,15 @@ Object.keys(apps).map(async appName => {
     });
   });
 
-  // proc.once('sendingSIGINT', () => {
-  //   console.log('Sending SIGINT to', colorizeName(appName));
-  // });
-  // proc.once('forcefulKill', () => {
-  //   console.log('Graceful shutdown failed, sending SIGKILL to', colorizeName(appName));
-  // });
+  proc.on('killing').subscribe(signal => {
+    if(signal === 'SIGINT') {
+      console.log('Sending SIGINT to', colorizeName(appName));
+    } else if(signal === 'SIGKILL') {
+      console.log('Graceful shutdown failed, sending SIGKILL to', colorizeName(appName));
+    }
+  });
+
+  await proc.start();
 });
 
 setTimeout(() => {

@@ -4,7 +4,6 @@ import Docker from 'dockerode';
 import { Container } from 'dockerode';
 import Bluebird from 'bluebird';
 import { Subscription, Subject } from 'rxjs';
-import { v4 as uuid } from 'uuid';
 import { memoize } from './common';
 
 const argvSplit = require('argv-split');
@@ -21,16 +20,17 @@ export class DockerProcess extends Process {
     super();
   }
 
+  @memoize()
+  private emitStarted() {
+    this.emit('started', true);
+  }
+
   async start() {
     const subject = new Subject();
-
     let container: Container;
-
-    const id = uuid();
 
     this.subscription = subject
       .pipe(switchMap(async () => {
-
         const Cmd = this.command && argvSplit(this.command);
         container = await docker.createContainer({
           Image: this.image,
@@ -51,8 +51,10 @@ export class DockerProcess extends Process {
         this.container = container;
       }))
       .pipe(switchMap(async () => {
-        console.log('Attaching container');
         const containerStream = await container.attach({stream: true, stdout: true, stderr: true, hijack: true});
+        containerStream.once('data', () => {
+          this.emitStarted();
+        });
         containerStream.on('end', async () => {
           const { State: { ExitCode }} = await container.inspect();
           this.emit('exit', ExitCode);
@@ -62,20 +64,27 @@ export class DockerProcess extends Process {
         this.emit('output', containerStream);
       }))
       .pipe(switchMap(async () => {
-        console.log('Starting container');
         await container.start();
+        this.emitStarted();
       }))
-      .subscribe();
+      .subscribe({
+        error: err => {
+          this.emit('error', err);
+        }
+      });
 
     subject.next();
   }
 
-  async kill(signal: string) {
-    if(signal === 'SIGINT') {
-      this.emit('killing', true);
+  async kill(signal: 'SIGINT' | 'SIGKILL') {
+    if(this.ended) {
+      return false;
     }
+    this.emit('killing', signal);
     this.subscription && this.subscription.unsubscribe();
-    await this.cleanup();
+    if(signal === 'SIGKILL') {
+      await this.cleanup();
+    }
     return true;
   };
 

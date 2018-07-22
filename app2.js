@@ -9,7 +9,7 @@ setInterval(() => {
 
 process.on('SIGINT', () => {
   console.log('GOT SIGINT inside');
-  setTimeout(() => { process.exit(0) }, 500);
+  setTimeout(() => { process.exit(0) }, 5000);
 });
 
 

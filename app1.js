@@ -15,6 +15,8 @@ setInterval(() => {
 }, 500 + Math.random() * 500);
 
 
+console.log('ENV', process.env);
+
 process.on('SIGINT', () => {
   console.log('GOT SIGINT inside');
   setTimeout(() => { process.exit(0) }, 5000);
@@ -24,6 +26,14 @@ setTimeout(() => {
   console.log('EXIT!!');
   process.exit();
 }, 20000);
+
+
+const http = require('http');
+
+http.createServer((req, res) => {
+  res.write('hello');
+  res.end();
+}).listen(8090);
 
 // ["SIGUSR1", "SIGINT", "SIGTERM", "SIGPIPE", "SIGHUP", "SIGBREAK", "SIGWINCH",].map(function(sigName){
 //   process.on(sigName, function(){

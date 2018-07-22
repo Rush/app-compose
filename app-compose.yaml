@@ -1,17 +1,48 @@
 apps:
-  # app-abc:
+  mongo:
+    image: mongo
+    depends_on:
+      - foo
+    ports:
+      - 27017:27018
+    ready:
+      wait_for_log: waiting for connections on port 27017
+      # wait_for_ports: true
+  # mongo2:
+  #   image: mongo
+  #   depends_on: [ mongo ]
+  #   triggers:
+  #     ready: waiting for connections on port 27017
+  # # app-abc:
+  # #   command: node app1.js
+  # app2:
   #   command: node app1.js
-  app2:
-    command: node app3.js
-  app3:
-    image: node99999999999
-    command: node app3.js
+  #   depends_on:
+  #     - mongo
+  #     - mongo2
+  #   environment:
+  #     FOO: 1
+  # app3:
+  #   image: node
+  #   command: node app1.js
+  #   environment:
+  #     BAR: 1
+  #     PATH: /dupa:$PATH
+  #   dupa:
+  #     - PATH=/dupa:$PATH
+  #   depends_on:
+  #     - mongo
+  #     - mongo2
   # app1-nod:
   #   image: node
   #   command: node app1.js
   # app1-nod-2:
-  #   command: node app2.js
+  #   image: node
+  #   command: node app1.js
+  #   depends_on: [ mongo ]
+  #   ports:
+  #     - 8090:8091/tcp
+  #   volumes:
+  #     - ./:/app
   # redis:
   #   image: redis
-  # mongo:
-  #   image: mongo

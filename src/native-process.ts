@@ -3,7 +3,7 @@ import * as pty from 'node-pty';
 import { ITerminal, ProcessEnv } from 'node-pty/lib/interfaces';
 import { platform } from 'os';
 import { Stream } from 'stream';
-import { Process } from './process';
+import { Process, ProcessEnvironment } from './process';
 
 const terminate = Bluebird.promisify<Promise<null>, number>(require('terminate'));
 
@@ -11,6 +11,11 @@ const termColumns = process.stdout.columns || 80;
 const termRows = process.stdout.rows || 30;
 
 const shell = platform() === 'win32' ? 'powershell.exe' : '/bin/sh';
+
+export interface NativeProcessEntry {
+  command: string;
+  environment?: ProcessEnvironment,
+};
 
 interface SpawnOptions {
   columns?: number;
@@ -37,12 +42,17 @@ export function spawn(cwd: string, command: string, options: SpawnOptions = {}) 
 export class NativeProcess extends Process {
   proc: ITerminal | null = null;
 
-  constructor(private cwd: string, private command: string, private options: SpawnOptions) {
-    super();
+  constructor(name: string, private cwd: string, private options: NativeProcessEntry) {
+    super(name);
   }
 
-  async start() {
-    this.proc = spawn(this.cwd, this.command, this.options);
+  async start(extraEnvironment: ProcessEnvironment) {
+    const { command, environment } = this.options;
+    const finalEnvironment = Object.assign({}, environment, extraEnvironment);
+
+    this.proc = spawn(this.cwd, command, {
+      env: finalEnvironment,
+    });
     this.emit('started', true);
     this.emit('output', this.proc as any as Stream);
     this.proc.once('exit', exitCode => {

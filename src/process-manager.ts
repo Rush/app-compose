@@ -1,37 +1,18 @@
 import Bluebird from 'bluebird';
 import chalk from 'chalk';
-import { DockerProcess } from './docker-process';
-import { NativeProcess } from './native-process';
-import { Process, ProcessEnvironment } from './process';
+import { DockerProcess, DockerProcessEntry } from './docker-process';
+import { NativeProcess, NativeProcessEntry } from './native-process';
+import { Process } from './process';
 import { take, timeout, catchError } from 'rxjs/operators';
 import { from } from 'rxjs';
 
 const processes = new Set<Process>();
 
-export interface NativeProcessEntry {
-  command: string;
-  environment?: ProcessEnvironment,
-};
-
-export interface DockerProcessEntry {
-  image: string;
-  command?: string;
-  environment?: ProcessEnvironment,
-  ports?: (string|number)[],
-  volumes?: string[],
-}
-
 export type ProcessEntry = NativeProcessEntry | DockerProcessEntry;
 
-export function createProcess(cwd: string, processEntry: ProcessEntry): Process {
+export function createProcess(name: string, cwd: string, processEntry: ProcessEntry): Process {
   if ('image' in processEntry) {
-    const proc = new DockerProcess(cwd,
-      processEntry.image,
-      processEntry.command,
-      processEntry.environment,
-      processEntry.ports,
-      processEntry.volumes,
-    );
+    const proc = new DockerProcess(name, cwd, processEntry);
     processes.add(proc);
     return proc;
   }
@@ -39,9 +20,7 @@ export function createProcess(cwd: string, processEntry: ProcessEntry): Process 
     throw new Error('You need to specify command');
   }
 
-  const proc = new NativeProcess(cwd, processEntry.command, {
-    env: processEntry.environment,
-  });
+  const proc = new NativeProcess(name, cwd, processEntry);
   processes.add(proc);
   return proc;
 }

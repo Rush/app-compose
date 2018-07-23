@@ -3,17 +3,15 @@ import chalk from 'chalk';
 import { readFileSync } from 'fs';
 import yaml from 'js-yaml';
 import { isArray, isPlainObject, isString, isUndefined, mapValues } from 'lodash';
-import { forkJoin, Observable, timer } from 'rxjs';
-import { take, filter, switchMap, map, skipUntil, first } from 'rxjs/operators';
+import { forkJoin, from, Observable, timer } from 'rxjs';
+import { filter, first, map, switchMap } from 'rxjs/operators';
 import { colorizeName } from './common';
+import { DockerProcess, DockerProcessEntry } from './docker-process';
+import { NativeProcessEntry } from './native-process';
 import { Process, ProcessEnvironment } from './process';
-import { createProcess, registerSigInt, NativeProcessEntry, DockerProcessEntry, ProcessEntry } from './process-manager';
-import { DockerProcess } from './docker-process';
-import { promisify } from 'util';
-import { connect } from 'net';
+import { createProcess, registerSigInt } from './process-manager';
 
 const isPortReachable = require('is-port-reachable');
-const connectAsync = promisify(connect);
 
 Bluebird.config({
   longStackTraces: true
@@ -39,13 +37,11 @@ const mapValuesDeep = (obj: any, fn: any): any => {
   );
 }
 
-const env: ProcessEnvironment = Object.assign({}, process.env) as any;
-
 interface ComposeAppEntry {
   depends_on?: string[],
   ready?: {
     wait_for_log?: string,
-    wait_for_ports?: boolean,
+    wait_for_ports?: boolean | string[],
     when_done?: true,
   }
 }
@@ -56,8 +52,11 @@ interface ComposeAppDocker extends ComposeAppEntry, DockerProcessEntry {}
 type ComposeProcessEntry = ComposeAppNative | ComposeAppDocker;
 
 interface ComposeConfig {
+  environment: ProcessEnvironment,
   apps: { [key: string]: ComposeProcessEntry },
 }
+
+const env: ProcessEnvironment = Object.assign({}, process.env) as any;
 
 function loadConfig(): ComposeConfig {
   const appSetup = yaml.safeLoad(readFileSync('./app-compose.yaml', 'utf8'));
@@ -78,14 +77,13 @@ function loadConfig(): ComposeConfig {
   return mappedConfig;
 }
 
-const { apps } = loadConfig();
+const { apps, environment } = loadConfig();
+Object.assign(env, environment);
 
 const maxLength = Object.keys(apps)
   .map(appName => appName.length)
   .sort((a, b) => a - b)
   .pop() || 0;
-
-// const appNameSectionLength = (maxLength + 3);
 
 const cwd = process.cwd();
 
@@ -95,7 +93,7 @@ function createProcesses() {
   return Promise.all(Object.keys(apps).map(async appName => {
     const appEntry = apps[appName];
 
-    const proc = await createProcess(cwd, appEntry);
+    const proc = await createProcess(appName, cwd, appEntry);
     processes.set(appName, proc);
   }));
 }
@@ -103,6 +101,7 @@ function createProcesses() {
 function setupReadyTriggers(proc: Process, appEntry: ComposeProcessEntry) {
   let triggerRegexp: RegExp;
   let readyObservables$: Observable<void>[] = []
+  const appName = proc.name;
 
   if(appEntry.ready) {
     const { wait_for_log, wait_for_ports, when_done } = appEntry.ready;
@@ -118,38 +117,60 @@ function setupReadyTriggers(proc: Process, appEntry: ComposeProcessEntry) {
       readyObservables$.push(proc.on('exit').pipe(first()));
     }
     if (wait_for_ports) {
+      let host$: Observable<string>;
+      let ports: string[];
+
       if(proc instanceof DockerProcess) {
-        const ports = proc.dockerTcpPorts;
-        readyObservables$.push(...ports.map(port => {
-          return timer(100, 500)
-            .pipe(skipUntil(proc.on('started')))
-            .pipe(filter(() => {
-              return !!proc.ipAddress;
-            }))
-            .pipe(switchMap(() => isPortReachable(port, { host: proc.ipAddress })))
-            .pipe(filter(value => {
-              return !!value;
-            }))
-            .pipe(first())
-            .pipe(map(_ => {}));
-        }));
+        host$ = proc.ipAddress$;
+        if (typeof wait_for_ports === 'boolean') {
+          ports = proc.dockerTcpPorts
+        } else {
+          ports = wait_for_ports;
+        }
+      } else {
+        host$ = from([ 'localhost' ]);
+        if (typeof wait_for_ports === 'boolean') {
+          console.warn(chalk.gray(`${appName} has ready.wait_for_ports set as true but this mode is only supported for docker processes`));
+          ports = [];
+        }  else {
+          ports = wait_for_ports;
+        }
       }
+
+      readyObservables$.push(...ports.map(port => {
+        return proc.on('started')
+          .pipe(switchMap(() => host$))
+          .pipe(switchMap(host => {
+            return timer(100, 500).pipe(map(() => host));
+          }))
+          .pipe(switchMap(host => {
+            return isPortReachable(port, { host })
+          }))
+          .pipe(filter(value => {
+            return !!value;
+          }))
+          .pipe(first())
+          .pipe(map(_ => {}));
+      }));
     }
   }
 
-  forkJoin(...readyObservables$).subscribe(async () => {
+  const subscription = forkJoin(...readyObservables$).subscribe(async () => {
     proc.triggerReady({ notify: true });
   });
 
+   proc.on('exit').subscribe(() => subscription.unsubscribe());
+
   if(!readyObservables$.length) {
     proc.on('started').subscribe(() => {
-      console.log("Trigger ready", appEntry);
       proc.triggerReady({ notify: false });
     });
   }
 }
 
 function startProcesses() {
+  const extraEnvironment: ProcessEnvironment = {};
+
   Object.keys(apps).map(async appName => {
     const appEntry = apps[appName];
     const proc = processes.get(appName);
@@ -205,8 +226,26 @@ function startProcesses() {
 
     setupReadyTriggers(proc, appEntry);
 
+    // workaround for SIGINT handler breaking when spawning new native processes
+    proc.on('started').pipe(first()).subscribe(() => {
+      registerSigInt();
+    });
+
+    if('expose_ip' in appEntry && proc instanceof DockerProcess) {
+      proc.ipAddress$.subscribe(ipAddress => {
+        if(appEntry.expose_ip) {
+
+          console.log(colorizeName(appName), '...',
+            `exposed IP address ${ipAddress} as environment variable ${appEntry.expose_ip} to dependant processes`
+          );
+          extraEnvironment[appEntry.expose_ip] = ipAddress;
+        }
+      });
+    }
+
+    // depends on logic
     if (!dependsOn.length) {
-      await proc.start();
+      await proc.start(extraEnvironment);
       return;
     }
 
@@ -215,12 +254,6 @@ function startProcesses() {
     );
 
     const isProcess = (process: Process | undefined): process is Process => !!process;
-
-    // workaround for SIGINT handler breaking when spawning new native processes
-    proc.on('started').pipe(first()).subscribe(() => {
-      registerSigInt();
-    });
-
     const readyEvents$ = dependsOn.map((depAppName: string) => {
       if (!processes.has(depAppName)) {
         console.warn(chalk.gray(`${appName} depends on ${depAppName} but it is not defined in the compose file`));
@@ -231,7 +264,7 @@ function startProcesses() {
       .map((depProc: Process) => depProc.on('ready').pipe(first()));
 
     forkJoin(...readyEvents$).subscribe(async () => {
-      await proc.start();
+      await proc.start(extraEnvironment);
     });
   });
 }

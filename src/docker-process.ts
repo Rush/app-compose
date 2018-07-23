@@ -1,6 +1,6 @@
 import Bluebird from 'bluebird';
 import Docker, { Container } from 'dockerode';
-import { Subject, Subscription } from 'rxjs';
+import { Subject, Subscription, ReplaySubject } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { memoize } from './common';
 import { Process, ProcessEnvironment } from './process';
@@ -12,27 +12,42 @@ const docker = new Docker({
   Promise: Bluebird as any
 });
 
+export interface DockerProcessEntry {
+  image: string;
+  command?: string;
+  environment?: ProcessEnvironment;
+  ports?: (string|number)[],
+  volumes?: string[],
+  expose_ip?: string,
+}
+
 export class DockerProcess extends Process {
   container: Container | null = null;
   private subscription: Subscription | null = null;
   private _ipAddress: string|null = null;
+
+  ipAddress$ = new ReplaySubject<string>(1);
+
   get ipAddress() { return this._ipAddress; }
 
+  private setIpAddress(ipAddress: string) {
+    this._ipAddress = ipAddress;
+    this.ipAddress$.next(this._ipAddress);
+  }
+
   get dockerTcpPorts() {
-    return this.ports.map(this.parsePort, this)
+    const { ports = [] } = this.options;
+    return ports.map(this.parsePort, this)
       .filter(portDef => portDef.protocol === 'tcp')
       .map(portDef => portDef.sourcePort);
   }
 
   constructor(
+    name: string,
     private cwd: string,
-    private image: string,
-    private command: string | undefined,
-    private environment: ProcessEnvironment = {},
-    private ports: (string|number)[] = [],
-    private volumes: string[] = [],
+    private options: DockerProcessEntry,
   ) {
-    super();
+    super(name);
   }
 
   @memoize()
@@ -73,29 +88,33 @@ export class DockerProcess extends Process {
     return `${pathResolve(this.cwd, source)}:${target}`;
   }
 
-  async start() {
+  async start(extraEnvironment: ProcessEnvironment) {
+    const { environment = {}, ports = [], command, volumes = [], image} = this.options;
+
     const subject = new Subject();
     let container: Container;
 
-    const Env = Object.keys(this.environment).map(envKey => {
-      return `${envKey}=${this.environment[envKey]}`;
+    const finalEnvironment = Object.assign({}, environment, extraEnvironment);
+
+    const Env = Object.keys(finalEnvironment).map(envKey => {
+      return `${envKey}=${environment[envKey]}`;
     });
 
-    const PortBindings = Object.assign({}, ...this.ports.map(this.makeDockerPort, this));
+    const PortBindings = Object.assign({}, ...ports.map(this.makeDockerPort, this));
     const ExposedPorts = Object.assign({}, PortBindings);
     Object.keys(ExposedPorts).map((key: string) => {
       ExposedPorts[key] = {};
     });
 
-    this.ports.map(this.parsePort, this)
+    ports.map(this.parsePort, this)
 
-    const Binds = this.volumes.map(this.parseVolume, this);
+    const Binds = volumes.map(this.parseVolume, this);
 
     this.subscription = subject
       .pipe(switchMap(async () => {
-        const Cmd = this.command && argvSplit(this.command);
+        const Cmd = command && argvSplit(command);
         container = await docker.createContainer({
-          Image: this.image,
+          Image: image,
           AttachStdin: true,
           AttachStdout: true,
           AttachStderr: true,
@@ -132,7 +151,7 @@ export class DockerProcess extends Process {
         const data = await container.inspect();
         const { NetworkSettings: { IPAddress } } = data;
 
-        this._ipAddress = IPAddress;
+        this.setIpAddress(IPAddress);
       }))
       .subscribe({
         error: err => {

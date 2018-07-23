@@ -6,8 +6,9 @@ apps:
     ports:
       - 27017:27018
     ready:
-      wait_for_log: waiting for connections on port 27017
-      # wait_for_ports: true
+      #wait_for_log: waiting for connections on port 27017
+      wait_for_ports: true
+    expose_ip: MONGO_HOST
   # mongo2:
   #   image: mongo
   #   depends_on: [ mongo ]
@@ -15,13 +16,13 @@ apps:
   #     ready: waiting for connections on port 27017
   # # app-abc:
   # #   command: node app1.js
-  # app2:
-  #   command: node app1.js
-  #   depends_on:
-  #     - mongo
-  #     - mongo2
-  #   environment:
-  #     FOO: 1
+  app2:
+    command: node app1.js
+    depends_on:
+      - mongo
+      - mongo2
+    environment:
+      FOO: 1
   # app3:
   #   image: node
   #   command: node app1.js

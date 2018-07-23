@@ -18,8 +18,11 @@ export type ProcessEnvironment = { [key: string]: string };
 export abstract class Process extends Emitter<Messages> {
   private _ended = false;
   get ended() {return this._ended; }
+  get name() { return this._name; }
 
-  constructor() {
+  protected extraEnvironment: ProcessEnvironment = {};
+
+  constructor(private _name: string) {
     super();
     this.on('exit').subscribe(() => this._ended = true);
 
@@ -47,5 +50,5 @@ export abstract class Process extends Emitter<Messages> {
   abstract kill(signal: 'SIGINT' | 'SIGKILL'): Promise<boolean>;
   async cleanup() { }
 
-  abstract start(): Promise<void>;
+  abstract start(extraEnvironment: ProcessEnvironment): Promise<void>;
 };

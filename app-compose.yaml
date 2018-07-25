@@ -1,6 +1,29 @@
 apps:
+  app2:
+    image: node
+    command: node app1.js
+    volumes:
+      - ./:/app
+    depends_on:
+      - mongo2
+    environment:
+      MONGO_ADDRESS: "$MONGO_HOST:27017"
+      FOO: 1
+      BAR: true
+      BAZ: 4
+  mongo2:
+    image: mongo:3.2
+    depends_on:
+      - mongo
+    ports:
+      - 27017:27019
+    ready:
+      #wait_for_log: waiting for connections on port 27017
+      wait_for_ports: true
+    export:
+      MONGO2_HOST: $DOCKER_IP
   mongo:
-    image: mongo
+    image: mongo:3.2
     depends_on:
       - foo
     ports:
@@ -8,7 +31,9 @@ apps:
     ready:
       #wait_for_log: waiting for connections on port 27017
       wait_for_ports: true
-    expose_ip: MONGO_HOST
+    export:
+      MONGO_HOST: $DOCKER_IP
+
   # mongo2:
   #   image: mongo
   #   depends_on: [ mongo ]
@@ -16,13 +41,6 @@ apps:
   #     ready: waiting for connections on port 27017
   # # app-abc:
   # #   command: node app1.js
-  app2:
-    command: node app1.js
-    depends_on:
-      - mongo
-      - mongo2
-    environment:
-      FOO: 1
   # app3:
   #   image: node
   #   command: node app1.js

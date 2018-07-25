@@ -2,40 +2,23 @@ import Bluebird from 'bluebird';
 import chalk from 'chalk';
 import { readFileSync } from 'fs';
 import yaml from 'js-yaml';
-import { isArray, isPlainObject, isString, isUndefined, mapValues } from 'lodash';
 import { forkJoin, from, Observable, timer } from 'rxjs';
-import { filter, first, map, switchMap } from 'rxjs/operators';
+import { filter, first, map, switchMap, delay } from 'rxjs/operators';
 import { colorizeName } from './common';
 import { DockerProcess, DockerProcessEntry } from './docker-process';
+import { processEnvironment, replaceVariablesInObject } from './environment';
 import { NativeProcessEntry } from './native-process';
 import { Process, ProcessEnvironment } from './process';
 import { createProcess, registerSigInt } from './process-manager';
 
+import yargs from 'yargs';
+
 const isPortReachable = require('is-port-reachable');
+const validateConfig = require('../app-compose.schema');
 
 Bluebird.config({
   longStackTraces: true
 });
-
-const mapValuesDeep = (obj: any, fn: any): any => {
-  if (isArray(obj)) {
-    return obj.map((elem, idx) => {
-      if (isString(elem)) {
-        return fn(elem, idx, obj);
-      } else if(isPlainObject(elem) || isArray(elem)) {
-        return mapValuesDeep(elem, fn);
-      } else {
-        return elem;
-      }
-    });
-  }
-
-  return mapValues(obj, (val, key) =>
-    (isPlainObject(val) || isArray(val))
-      ? mapValuesDeep(val, fn)
-      : fn(val, key, obj)
-  );
-}
 
 interface ComposeAppEntry {
   depends_on?: string[],
@@ -43,7 +26,8 @@ interface ComposeAppEntry {
     wait_for_log?: string,
     wait_for_ports?: boolean | string[],
     when_done?: true,
-  }
+  },
+  export: ProcessEnvironment,
 }
 
 interface ComposeAppNative extends ComposeAppEntry, NativeProcessEntry {}
@@ -56,29 +40,21 @@ interface ComposeConfig {
   apps: { [key: string]: ComposeProcessEntry },
 }
 
-const env: ProcessEnvironment = Object.assign({}, process.env) as any;
-
 function loadConfig(): ComposeConfig {
-  const appSetup = yaml.safeLoad(readFileSync('./app-compose.yaml', 'utf8'));
-
-  const mappedConfig = mapValuesDeep(appSetup, (value: any, key: string, object: any) => {
-    if (isString(value)) {
-      value = value.replace(/\$(?:([a-zA-Z_]+[a-zA-Z0-9_]*)|{([a-zA-Z_]+[a-zA-Z0-9_]*)})/g, (_, variable: string) => {
-        let substitutedValue = env[variable] as any;
-        if (isUndefined(env[variable])) {
-          console.warn(chalk.gray(`Subtituted environment variable ${variable} but it's not defined in the host environment. Substituting with an empty string.`));
-          substitutedValue = '';
-        }
-        return substitutedValue;
-      });
-    }
-    return value;
-  });
-  return mappedConfig;
+  const config = yaml.safeLoad(readFileSync('./app-compose.yaml', 'utf8'));
+  const valid = validateConfig(config);
+  if(!valid) {
+    console.error('Error loading app-compose.yaml:');
+    console.error(validateConfig.errors.map((error: any) => {
+      return `  ${error.keyword} ${error.dataPath} ${error.message}`
+    }).join('\n'));
+    process.exit(1);
+  }
+  return config;
 }
 
 const { apps, environment } = loadConfig();
-Object.assign(env, environment);
+Object.assign(processEnvironment, replaceVariablesInObject(environment, processEnvironment));
 
 const maxLength = Object.keys(apps)
   .map(appName => appName.length)
@@ -155,11 +131,20 @@ function setupReadyTriggers(proc: Process, appEntry: ComposeProcessEntry) {
     }
   }
 
+  // should be first ready listener
+  proc.on('ready').subscribe(() => {
+    Object.assign(proc.exportedEnvironment, replaceVariablesInObject(
+      appEntry.export,
+      Object.assign({}, processEnvironment, proc.exportedEnvironment, proc.variables)
+    ));
+  });
+
   const subscription = forkJoin(...readyObservables$).subscribe(async () => {
     proc.triggerReady({ notify: true });
   });
 
    proc.on('exit').subscribe(() => subscription.unsubscribe());
+   proc.on('killing').subscribe(() => subscription.unsubscribe());
 
   if(!readyObservables$.length) {
     proc.on('started').subscribe(() => {
@@ -169,8 +154,6 @@ function setupReadyTriggers(proc: Process, appEntry: ComposeProcessEntry) {
 }
 
 function startProcesses() {
-  const extraEnvironment: ProcessEnvironment = {};
-
   Object.keys(apps).map(async appName => {
     const appEntry = apps[appName];
     const proc = processes.get(appName);
@@ -204,6 +187,12 @@ function startProcesses() {
       );
     });
 
+    proc.on('status').subscribe(message => {
+      console.log(colorizeName(appName), '...',
+        chalk.yellow(message)
+      );
+    });
+
     proc.on('line').subscribe(line => {
       console.log(`${colorizeName(appName)}${' '.repeat(maxLength - appName.length)} | ${line}`);
     });
@@ -216,13 +205,16 @@ function startProcesses() {
       }
     });
 
+    const isProcess = (process: Process | undefined): process is Process => !!process;
+
     const dependsOn = (appEntry.depends_on || []).filter((depAppName: string) => {
-      if (!processes.has(depAppName)) {
-        console.warn(chalk.gray(`${appName} depends on ${depAppName} but it is not defined in the compose file`));
+      if (!processes.has(appName)) {
+        console.warn(chalk.gray(`${appName} depends on $export {depAppName} but it is not defined in the compose file`));
         return false;
       }
       return true;
-    });
+    }).map(appName => processes.get(appName)).filter(isProcess);
+
 
     setupReadyTriggers(proc, appEntry);
 
@@ -231,41 +223,30 @@ function startProcesses() {
       registerSigInt();
     });
 
-    if('expose_ip' in appEntry && proc instanceof DockerProcess) {
-      proc.ipAddress$.subscribe(ipAddress => {
-        if(appEntry.expose_ip) {
-
-          console.log(colorizeName(appName), '...',
-            `exposed IP address ${ipAddress} as environment variable ${appEntry.expose_ip} to dependant processes`
-          );
-          extraEnvironment[appEntry.expose_ip] = ipAddress;
-        }
-      });
-    }
-
-    // depends on logic
     if (!dependsOn.length) {
-      await proc.start(extraEnvironment);
+      await proc.start({});
       return;
     }
 
     console.log(colorizeName(appName), '...',
-      'waiting for', dependsOn.map(colorizeName).join(' '), 'to become ready'
+      'waiting for', dependsOn.map(p => colorizeName(p.name)).join(' '), 'to become ready'
     );
 
-    const isProcess = (process: Process | undefined): process is Process => !!process;
-    const readyEvents$ = dependsOn.map((depAppName: string) => {
-      if (!processes.has(depAppName)) {
-        console.warn(chalk.gray(`${appName} depends on ${depAppName} but it is not defined in the compose file`));
-      }
-      return processes.get(depAppName);
-    })
-      .filter(isProcess)
-      .map((depProc: Process) => depProc.on('ready').pipe(first()));
+    const readyEvents$ = dependsOn
+      .map((depProc: Process) =>
+        depProc.on('ready').pipe(first()).pipe(map(() => depProc))
+      )
 
-    forkJoin(...readyEvents$).subscribe(async () => {
-      await proc.start(extraEnvironment);
-    });
+    forkJoin(...readyEvents$)
+      .pipe(delay(0))
+      .subscribe(async (processes: Process[]) => {
+        const exportedEnvironments = processes.map(p => {
+          return p.exportedEnvironment;
+        });
+        const extraEnvironment = Object.assign({}, ...exportedEnvironments);
+        Object.assign(proc.exportedEnvironment, extraEnvironment);
+        await proc.start(extraEnvironment);
+      });
   });
 }
 

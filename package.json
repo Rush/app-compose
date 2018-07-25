@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc"
+    "build": "tsc",
+    "schema": "typescript-json-schema tsconfig.json ComposeConfig > app-compose.schema.json"
   },
   "author": "",
   "license": "ISC",
@@ -28,16 +29,19 @@
     "uuid": "^3.3.2"
   },
   "devDependencies": {
-    "@types/split": "^0.3.28",
-    "@types/lodash": "^4.14.112",
     "@types/bluebird": "^3.5.22",
     "@types/chalk": "^2.2.0",
     "@types/dockerode": "^2.5.5",
     "@types/js-yaml": "^3.11.2",
+    "@types/lodash": "^4.14.112",
     "@types/memoizee": "^0.4.2",
     "@types/node": "^10.5.2",
+    "@types/split": "^0.3.28",
     "@types/uuid": "^3.4.3",
+    "@types/yargs": "^11.1.1",
+    "ajv-cli": "^3.0.0",
     "ts-node": "^7.0.0",
-    "typescript": "^2.9.2"
+    "typescript": "^2.9.2",
+    "typescript-json-schema": "^0.27.0"
   }
 }

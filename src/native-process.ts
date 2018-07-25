@@ -4,6 +4,7 @@ import { ITerminal, ProcessEnv } from 'node-pty/lib/interfaces';
 import { platform } from 'os';
 import { Stream } from 'stream';
 import { Process, ProcessEnvironment } from './process';
+import { processEnvironment, replaceVariablesInObject } from './environment';
 
 const terminate = Bluebird.promisify<Promise<null>, number>(require('terminate'));
 
@@ -29,7 +30,7 @@ function spawnRaw(cwd: string, command: string, args: string[], options: SpawnOp
     cols: options.columns || 80,
     rows: options.rows || 30,
     cwd,
-    env: Object.assign({}, process.env, options.env) as ProcessEnv,
+    env: Object.assign({}, processEnvironment, options.env) as ProcessEnv,
   });
 
   return proc;
@@ -48,10 +49,10 @@ export class NativeProcess extends Process {
 
   async start(extraEnvironment: ProcessEnvironment) {
     const { command, environment } = this.options;
-    const finalEnvironment = Object.assign({}, environment, extraEnvironment);
+    const finalEnvironment = Object.assign({}, extraEnvironment, environment);
 
     this.proc = spawn(this.cwd, command, {
-      env: finalEnvironment,
+      env: replaceVariablesInObject(finalEnvironment, finalEnvironment, true),
     });
     this.emit('started', true);
     this.emit('output', this.proc as any as Stream);

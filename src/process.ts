@@ -4,23 +4,28 @@ import { memoize } from './common';
 import split from 'split';
 
 type Messages = {
-  exit: number,
-  started: boolean,
-  killing: 'SIGINT' | 'SIGKILL',
-  output: Stream,
-  error: Error,
-  ready: boolean,
-  line: string,
+  exit: number;
+  started: boolean;
+  killing: 'SIGINT' | 'SIGKILL';
+  output: Stream;
+  error: Error;
+  ready: boolean;
+  line: string;
+  status: string;
 };
 
-export type ProcessEnvironment = { [key: string]: string };
+export type ProcessEnvironment = { [key: string]: string|number|boolean };
 
 export abstract class Process extends Emitter<Messages> {
   private _ended = false;
   get ended() {return this._ended; }
   get name() { return this._name; }
 
-  protected extraEnvironment: ProcessEnvironment = {};
+  private _exportedEnvironment: ProcessEnvironment = {};
+  get exportedEnvironment() { return this._exportedEnvironment; }
+
+  private _variables: ProcessEnvironment = {};
+  get variables() { return this._variables; }
 
   constructor(private _name: string) {
     super();

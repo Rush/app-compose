@@ -19,7 +19,7 @@ console.log('ENV', process.env);
 
 process.on('SIGINT', () => {
   console.log('GOT SIGINT inside');
-  setTimeout(() => { process.exit(0) }, 5000);
+  setTimeout(() => { process.exit(0) }, 500);
 });
 
 setTimeout(() => {

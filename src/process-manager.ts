@@ -17,7 +17,7 @@ export function createProcess(name: string, cwd: string, processEntry: ProcessEn
     return proc;
   }
   if (!processEntry.command) {
-    throw new Error('You need to specify command');
+    throw new Error('You need to specify the command');
   }
 
   const proc = new NativeProcess(name, cwd, processEntry);

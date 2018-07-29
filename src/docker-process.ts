@@ -12,8 +12,10 @@ import { map } from 'rxjs/operators';
 import { from, of } from 'rxjs';
 import { spawn } from 'child_process';
 import split from 'split';
-import crypto from 'crypto';
 import hasha from 'hasha';
+
+const isMissingContainerError = (err: Error) => err.message.match(/No such container/);
+const isMissingImageError = (err: Error) => err.message.match(/No such image/);
 
 const argvSplit = require('argv-split');
 
@@ -316,9 +318,6 @@ export class DockerProcess extends Process {
 
     const imageWithTag = makeImageWithTag(image);
 
-    const isMissingContainerError = (err: Error) => err.message.match(/No such container/);
-    const isMissingImageError = (err: Error) => err.message.match(/No such image/);
-
     const dockerImage = docker.getImage(imageWithTag)
     let dockerImageInfo: Docker.ImageInspectInfo;
     try {
@@ -427,7 +426,10 @@ export class DockerProcess extends Process {
           }
           this.emit('status', `Rebuilding ${image} due to changes in file${changedFiles.length > 1 ? 's' : ''}: ${changedFiles.join(' ')}`);
         } catch(err) {
-          console.error('Error', err);
+          if (!isMissingImageError(err)) {
+            throw err;
+          }
+          this.emit('status', `Building ${image}`)
         }
 
         const observable = await DockerProcess.buildImage({

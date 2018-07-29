@@ -2,11 +2,15 @@ import { Emitter } from 'typed-rx-emitter';
 import { Stream } from 'stream';
 import { memoize } from './common';
 import split from 'split';
+import { Subscription, Observable } from 'rxjs';
+import { of } from 'rxjs'
+
+export type ProcessSignals = 'SIGINT' | 'SIGKILL' | 'SIGTERM';
 
 type Messages = {
   exit: number;
   started: boolean;
-  killing: 'SIGINT' | 'SIGKILL';
+  killing: ProcessSignals;
   output: Stream;
   error: Error;
   ready: boolean;
@@ -52,8 +56,13 @@ export abstract class Process extends Emitter<Messages> {
     this.emit('ready', notify);
   }
 
-  abstract kill(signal: 'SIGINT' | 'SIGKILL'): Promise<boolean>;
+  abstract kill(signal: ProcessSignals): Promise<boolean>;
+
   async cleanup() { }
 
   abstract start(extraEnvironment: ProcessEnvironment): Promise<void>;
+
+  prepare() {
+    return of();
+  }
 };

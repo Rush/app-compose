@@ -25,7 +25,7 @@ process.on('SIGINT', () => {
 setTimeout(() => {
   console.log('EXIT!!');
   process.exit();
-}, 20000);
+}, 60000);
 
 
 const http = require('http');

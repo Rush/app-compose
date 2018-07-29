@@ -1,38 +1,50 @@
 apps:
   app2:
-    image: node
+    image: app-node
+    build:
+      context: .
+      dockerfile: Dockerfile
     command: node app1.js
+    cwd: /app
     volumes:
       - ./:/app
+      - /app/node_modules
     depends_on:
       - mongo2
-    environment:
-      MONGO_ADDRESS: "$MONGO_HOST:27017"
-      FOO: 1
-      BAR: true
-      BAZ: 4
+  app3:
+    image: app-node
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: node app1.js
+    cwd: /app
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    depends_on:
+      - mongo2
   mongo2:
-    image: mongo:3.2
+    image: mongo
     depends_on:
       - mongo
     ports:
-      - 27017:27019
+      - 27019:27017
     ready:
       #wait_for_log: waiting for connections on port 27017
       wait_for_ports: true
     export:
       MONGO2_HOST: $DOCKER_IP
-  mongo:
-    image: mongo:3.2
-    depends_on:
-      - foo
-    ports:
-      - 27017:27018
-    ready:
-      #wait_for_log: waiting for connections on port 27017
-      wait_for_ports: true
-    export:
-      MONGO_HOST: $DOCKER_IP
+  # mongo:
+  #   image: mongo:3.2
+  #   depends_on:
+  #     - foo
+  #   ports:
+  #     - 27017:27018
+  #   ready:
+  #     #wait_for_log: waiting for connections on port 27017
+  #     wait_for_ports: true
+  #   export:
+  #     MONGO_HOST: $DOCKER_IP
 
   # mongo2:
   #   image: mongo

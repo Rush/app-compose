@@ -61,3 +61,6 @@ typings/
 .next
 
 dist
+
+app-compose.schema.json
+

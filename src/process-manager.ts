@@ -4,16 +4,17 @@ import { DockerProcess, DockerProcessEntry } from './docker-process';
 import { NativeProcess, NativeProcessEntry } from './native-process';
 import { Process } from './process';
 import { take, timeout, catchError } from 'rxjs/operators';
-import { from } from 'rxjs';
+import { from, Subject } from 'rxjs';
+import { ComposeProcessEntry } from './index';
 
-const processes = new Set<Process>();
+const processes = new Map<Process, ComposeProcessEntry>();
 
 export type ProcessEntry = NativeProcessEntry | DockerProcessEntry;
 
-export function createProcess(name: string, cwd: string, processEntry: ProcessEntry): Process {
+export function createProcess(name: string, cwd: string, processEntry: ComposeProcessEntry): Process {
   if ('image' in processEntry) {
     const proc = new DockerProcess(name, cwd, processEntry);
-    processes.add(proc);
+    processes.set(proc, processEntry);
     return proc;
   }
   if (!processEntry.command) {
@@ -21,11 +22,11 @@ export function createProcess(name: string, cwd: string, processEntry: ProcessEn
   }
 
   const proc = new NativeProcess(name, cwd, processEntry);
-  processes.add(proc);
+  processes.set(proc, processEntry);
   return proc;
 }
 
-enum SigIntStatus {
+export enum SigIntStatus {
   SoftExit,
   ForcedExit,
   PanicExit,
@@ -37,14 +38,18 @@ async function forcedExitHandler() {
   console.log(chalk.redBright(' Forcing shutdown ... (press Ctrl+C again to exit immediately)'));
   sigIntExitStatus = SigIntStatus.PanicExit;
 
-  await Bluebird.map(processes.values(), async proc => {
+  await Bluebird.map(processes.keys(), async proc => {
     await proc.terminate();
   });
   process.exit(1);
 }
 
+const subscription = new Subject<SigIntStatus>();
+
 async function sigIntHandler() {
   console.log(chalk.whiteBright(' Gracefully stopping... (press Ctrl+C again to force)'));
+
+  subscription.next(sigIntExitStatus);
 
   switch (+sigIntExitStatus) {
     case SigIntStatus.PanicExit:
@@ -55,16 +60,24 @@ async function sigIntHandler() {
 
   sigIntExitStatus = SigIntStatus.ForcedExit;
 
-  Bluebird.map(processes.values(), async proc => {
-    proc.kill('SIGINT');
+  Bluebird.map(processes.keys(), async proc => {
+    const entry = processes.get(proc);
+    proc.kill(entry && entry.quit_signal || 'SIGINT');
 
-    await proc.on('exit').pipe(take(1)).pipe(timeout(5000), catchError(async err => {
-      return from(proc.terminate());
-    })).toPromise();
+    await proc.on('exit').pipe(take(1))
+      .pipe(timeout(3000), catchError(async err => {
+        proc.kill('SIGTERM');
+      }))
+      .pipe(timeout(5000), catchError(async err => {
+        return from(proc.terminate());
+      })).toPromise();
   });
 }
+
 
 export function registerSigInt() {
   process.removeListener('SIGINT', sigIntHandler);
   process.on('SIGINT', sigIntHandler);
+
+  return subscription;
 }

@@ -60,3 +60,15 @@ typings/
 # next.js build output
 .next
 
+app-compose.schema.json
+
+Dockerfile
+
+src
+
+*.yaml
+
+tsconfig.json
+
+app1.js
+app2.js

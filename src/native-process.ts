@@ -3,8 +3,10 @@ import * as pty from 'node-pty';
 import { ITerminal, ProcessEnv } from 'node-pty/lib/interfaces';
 import { platform } from 'os';
 import { Stream } from 'stream';
-import { Process, ProcessEnvironment } from './process';
+import { Process, ProcessEnvironment, ProcessSignals } from './process';
 import { processEnvironment, replaceVariablesInObject } from './environment';
+import { takeUntil } from 'rxjs/operators';
+import { Subject, of } from 'rxjs';
 
 const terminate = Bluebird.promisify<Promise<null>, number>(require('terminate'));
 
@@ -56,12 +58,15 @@ export class NativeProcess extends Process {
     });
     this.emit('started', true);
     this.emit('output', this.proc as any as Stream);
+    const exitObservable = new Subject();
+
     this.proc.once('exit', exitCode => {
       this.emit('exit', exitCode);
+      exitObservable.next();
     });
   }
 
-  async kill(signal: 'SIGINT' | 'SIGKILL') {
+  async kill(signal: ProcessSignals) {
     if (this.ended || !this.proc) {
       return false;
     }

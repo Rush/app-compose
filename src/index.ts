@@ -2,8 +2,8 @@ import Bluebird from 'bluebird';
 import chalk from 'chalk';
 import { readFileSync } from 'fs';
 import yaml from 'js-yaml';
-import { forkJoin, from, Observable, timer } from 'rxjs';
-import { filter, first, map, switchMap, delay } from 'rxjs/operators';
+import { forkJoin, from, Observable, timer, Subject, of } from 'rxjs';
+import { filter, first, map, switchMap, delay, tap, takeUntil, concatAll, toArray } from 'rxjs/operators';
 import { colorizeName } from './common';
 import { DockerProcess, DockerProcessEntry } from './docker-process';
 import { processEnvironment, replaceVariablesInObject } from './environment';
@@ -28,12 +28,13 @@ interface ComposeAppEntry {
     when_done?: true,
   },
   export: ProcessEnvironment,
+  quit_signal: 'SIGINT' | 'SIGTERM' | 'SIGKILL'
 }
 
 interface ComposeAppNative extends ComposeAppEntry, NativeProcessEntry {}
 interface ComposeAppDocker extends ComposeAppEntry, DockerProcessEntry {}
 
-type ComposeProcessEntry = ComposeAppNative | ComposeAppDocker;
+export type ComposeProcessEntry = ComposeAppNative | ComposeAppDocker;
 
 interface ComposeConfig {
   environment: ProcessEnvironment,
@@ -153,7 +154,23 @@ function setupReadyTriggers(proc: Process, appEntry: ComposeProcessEntry) {
   }
 }
 
-function startProcesses() {
+function prepareProcesses() {
+  return from(Object.keys(apps).map(appName => {
+    const proc = processes.get(appName);
+    if (!proc) {
+      return of();
+    }
+    proc.on('status').subscribe(message => {
+      console.log(colorizeName(appName), '...',
+        chalk.yellow(message)
+      );
+    });
+
+    return proc.prepare();
+  })).pipe(concatAll()).pipe(toArray());
+}
+
+async function startProcesses() {
   Object.keys(apps).map(async appName => {
     const appEntry = apps[appName];
     const proc = processes.get(appName);
@@ -187,21 +204,15 @@ function startProcesses() {
       );
     });
 
-    proc.on('status').subscribe(message => {
-      console.log(colorizeName(appName), '...',
-        chalk.yellow(message)
-      );
-    });
-
     proc.on('line').subscribe(line => {
       console.log(`${colorizeName(appName)}${' '.repeat(maxLength - appName.length)} | ${line}`);
     });
 
     proc.on('killing').subscribe(signal => {
-      if (signal === 'SIGINT') {
-        console.log('Sending SIGINT to', colorizeName(appName));
-      } else if (signal === 'SIGKILL') {
+      if (signal === 'SIGKILL') {
         console.log('Graceful shutdown failed, sending SIGKILL to', colorizeName(appName));
+      } else {
+        console.log(`Sending ${signal} to`, colorizeName(appName));
       }
     });
 
@@ -251,11 +262,17 @@ function startProcesses() {
 }
 
 async function start() {
-  registerSigInt();
-  await createProcesses();
-  registerSigInt();
-  await startProcesses();
-  registerSigInt();
+  const subject = new Subject();
+  const sigIntObservable = registerSigInt();
+
+  of(true)
+    .pipe(switchMap(createProcesses))
+    .pipe(tap(registerSigInt))
+    .pipe(switchMap(prepareProcesses))
+    .pipe(tap(registerSigInt))
+    .pipe(switchMap(startProcesses))
+    .pipe(takeUntil(sigIntObservable))
+    .subscribe();
 }
 
 start();

@@ -415,7 +415,7 @@ export class DockerProcess extends Process {
         try {
           const imageWithTag = makeImageWithTag(image);
           const dockerImage = docker.getImage(imageWithTag);
-          const { ContainerConfig: { Labels: existingLabels } } = await dockerImage.inspect();
+          const { ContainerConfig: { Labels: existingLabels = {} } } = await dockerImage.inspect();
           const diffLabels = Object.keys(labelsToAssign).filter(label => {
             return labelsToAssign[label] !== existingLabels[label];
           });

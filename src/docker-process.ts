@@ -177,18 +177,23 @@ export class DockerProcess extends Process {
 
     type OutputEvent = { line: string, type: 'stdout'|'stderr' };
     const observable = new Subject<OutputEvent>();
-    const isEnded = new Subject();
-    proc.stdout.once('end', () => isEnded.next());
-    proc.stderr.once('end', () => isEnded.next());
+    let isEnded = false;
+    proc.stdout.once('end', () => (isEnded = true));
+    proc.stderr.once('end', () => (isEnded = true));
 
     proc.stdout.pipe(split()).on('data', (line: string) => {
+      if(isEnded && line.length === 0) { return; }
       observable.next({ line, type: 'stdout' });
     });
     proc.stderr.pipe(split()).on('data', (line: string) => {
+      if(isEnded && line.length === 0) { return; }
       observable.next({ line, type: 'stderr' });
     });
 
     proc.on('exit', (code) => {
+      if (code !== 0) {
+        return observable.error(new Error(`Image build error, docker build exited with code ${code}`));
+      }
       observable.complete();
     })
     proc.on('error', err => {
@@ -196,7 +201,6 @@ export class DockerProcess extends Process {
     });
 
     return observable
-      .pipe(takeUntil(isEnded))
       .pipe(tap({
         complete() {
           proc.kill();
@@ -416,7 +420,7 @@ export class DockerProcess extends Process {
           const dockerImage = docker.getImage(imageWithTag);
           const { ContainerConfig: { Labels: existingLabels } } = await dockerImage.inspect();
           const diffLabels = Object.keys(labelsToAssign).filter(label => {
-            return labelsToAssign[label] !== existingLabels[label];
+            return labelsToAssign[label] !== (existingLabels || {})[label];
           });
           const removeMd5Prefix = (x: string) => x.replace(/^md5:/, '');
           const changedFiles = diffLabels.map(removeMd5Prefix);

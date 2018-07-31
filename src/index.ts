@@ -88,10 +88,11 @@ function setupReadyTriggers(proc: Process, appEntry: ComposeProcessEntry) {
       readyObservables$.push(proc.on('line')
         .pipe(filter(line => triggerRegexp.test(line)))
         .pipe(first())
+        .pipe(map(() => {}))
       );
     }
     if (when_done) {
-      readyObservables$.push(proc.on('exit').pipe(first()));
+      readyObservables$.push(proc.on('exit').pipe(first()).pipe(map(() => {})));
     }
     if (wait_for_ports) {
       let host$: Observable<string>;

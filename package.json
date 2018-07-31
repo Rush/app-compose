@@ -1,6 +1,6 @@
 {
   "name": "app-compose",
-  "version": "1.0.6",
+  "version": "1.0.8",
   "description": "Alternative to docker-compose built solely for convenient development of apps",
   "main": "dist/index.js",
   "bin": "main.js",
@@ -46,7 +46,7 @@
     "@types/yargs": "^11.1.1",
     "ajv-cli": "^3.0.0",
     "ts-node": "^7.0.0",
-    "typescript": "^2.9.2",
+    "typescript": "^3.0.0",
     "typescript-json-schema": "^0.27.0"
   }
 }

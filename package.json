@@ -1,6 +1,6 @@
 {
   "name": "app-compose",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Alternative to docker-compose built solely for convenient development of apps",
   "main": "dist/index.js",
   "bin": "main.js",

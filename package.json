@@ -1,13 +1,13 @@
 {
   "name": "app-compose",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Alternative to docker-compose built solely for convenient development of apps",
   "main": "dist/index.js",
   "bin": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
-    "schema": "typescript-json-schema tsconfig.json ComposeConfig > app-compose.schema.json && ajv compile -s app-compose.schema.json -o app-compose.schema.js",
+    "schema": "typescript-json-schema tsconfig.json ComposeConfig > app-compose.schema.json && ajv compile -s app-compose.schema.json -o app-compose.schema.js && npm run build",
     "prepack": "npm run schema"
   },
   "author": "",

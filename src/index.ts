@@ -27,8 +27,9 @@ interface ComposeAppEntry {
     wait_for_ports?: boolean | string[],
     when_done?: true,
   },
-  export: ProcessEnvironment,
-  quit_signal: 'SIGINT' | 'SIGTERM' | 'SIGKILL'
+  export?: ProcessEnvironment,
+  quit_signal?: 'SIGINT' | 'SIGTERM' | 'SIGKILL',
+  group?: string,
 }
 
 interface ComposeAppNative extends ComposeAppEntry, NativeProcessEntry {}
@@ -66,10 +67,13 @@ const cwd = process.cwd();
 
 const processes = new Map<string, Process>();
 
-function createProcesses() {
+function createProcesses({ groups }: { groups: [string] }) {
   return Promise.all(Object.keys(apps).map(async appName => {
     const appEntry = apps[appName];
-
+    const group = appEntry.group || 'default';
+    if(!groups.includes(group)) {
+      return;
+    }
     const proc = await createProcess(appName, cwd, appEntry);
     processes.set(appName, proc);
   }));
@@ -262,12 +266,11 @@ async function startProcesses() {
   });
 }
 
-async function start() {
-  const subject = new Subject();
+async function run(argv: { groups: [string] }) {
   const sigIntObservable = registerSigInt();
 
   of(true)
-    .pipe(switchMap(createProcesses))
+    .pipe(switchMap(() => createProcesses({ groups: argv.groups })))
     .pipe(tap(registerSigInt))
     .pipe(switchMap(prepareProcesses))
     .pipe(tap(registerSigInt))
@@ -276,4 +279,17 @@ async function start() {
     .subscribe();
 }
 
-start();
+const argv = yargs
+  .usage('Usage: $0')
+  .command('run [groups..]', 'Run command', (yargs) => {
+    return yargs.positional('groups', {
+      describe: 'run apps from specific group',
+      type: 'string',
+      default: 'default',
+    });
+  }, run as any)
+  .argv;
+
+  if (!argv._[0]) {
+    run({ groups: ['default'] });
+  }

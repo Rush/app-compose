@@ -11,7 +11,7 @@ import { NativeProcessEntry } from './native-process';
 import { Process, ProcessEnvironment } from './process';
 import { createProcess, registerSigInt } from './process-manager';
 
-import yargs from 'yargs';
+const yargs = require('yargs');
 
 const isPortReachable = require('is-port-reachable');
 const validateConfig = require('../app-compose.schema');
@@ -281,7 +281,7 @@ async function run(argv: { groups: [string] }) {
 
 const argv = yargs
   .usage('Usage: $0')
-  .command('run [groups..]', 'Run command', (yargs) => {
+  .command('run [groups..]', 'Run command', (yargs: any) => {
     return yargs.positional('groups', {
       describe: 'run apps from specific group',
       type: 'string',

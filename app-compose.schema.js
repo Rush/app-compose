@@ -25,6 +25,9 @@ var validate = (function() {
         },
         "type": "object"
       },
+      "group": {
+        "type": "string"
+      },
       "quit_signal": {
         "enum": ["SIGINT", "SIGKILL", "SIGTERM"],
         "type": "string"
@@ -100,6 +103,9 @@ var validate = (function() {
           "type": ["string", "number", "boolean"]
         },
         "type": "object"
+      },
+      "group": {
+        "type": "string"
       },
       "image": {
         "type": "string"
@@ -326,16 +332,15 @@ var validate = (function() {
                       var valid5 = errors === errs_5;
                     }
                     if (valid5) {
-                      var data3 = data2.quit_signal;
-                      if (data3 === undefined) {
+                      if (data2.group === undefined) {
                         valid5 = true;
                       } else {
                         var errs_5 = errors;
-                        if (typeof data3 !== "string") {
+                        if (typeof data2.group !== "string") {
                           var err = {
                             keyword: 'type',
-                            dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].quit_signal',
-                            schemaPath: '#/definitions/ComposeAppNative/properties/quit_signal/type',
+                            dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].group',
+                            schemaPath: '#/definitions/ComposeAppNative/properties/group/type',
                             params: {
                               type: 'string'
                             },
@@ -345,117 +350,121 @@ var validate = (function() {
                           else vErrors.push(err);
                           errors++;
                         }
-                        var schema5 = refVal1.properties.quit_signal.enum;
-                        var valid5;
-                        valid5 = false;
-                        for (var i5 = 0; i5 < schema5.length; i5++)
-                          if (equal(data3, schema5[i5])) {
-                            valid5 = true;
-                            break;
-                          }
-                        if (!valid5) {
-                          var err = {
-                            keyword: 'enum',
-                            dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].quit_signal',
-                            schemaPath: '#/definitions/ComposeAppNative/properties/quit_signal/enum',
-                            params: {
-                              allowedValues: schema5
-                            },
-                            message: 'should be equal to one of the allowed values'
-                          };
-                          if (vErrors === null) vErrors = [err];
-                          else vErrors.push(err);
-                          errors++;
-                        }
                         var valid5 = errors === errs_5;
                       }
                       if (valid5) {
-                        var data3 = data2.ready;
+                        var data3 = data2.quit_signal;
                         if (data3 === undefined) {
                           valid5 = true;
                         } else {
                           var errs_5 = errors;
-                          if ((data3 && typeof data3 === "object" && !Array.isArray(data3))) {
-                            var errs__5 = errors;
-                            var valid6 = true;
-                            if (data3.wait_for_log === undefined) {
-                              valid6 = true;
-                            } else {
-                              var errs_6 = errors;
-                              if (typeof data3.wait_for_log !== "string") {
-                                var err = {
-                                  keyword: 'type',
-                                  dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].ready.wait_for_log',
-                                  schemaPath: '#/definitions/ComposeAppNative/properties/ready/properties/wait_for_log/type',
-                                  params: {
-                                    type: 'string'
-                                  },
-                                  message: 'should be string'
-                                };
-                                if (vErrors === null) vErrors = [err];
-                                else vErrors.push(err);
-                                errors++;
-                              }
-                              var valid6 = errors === errs_6;
+                          if (typeof data3 !== "string") {
+                            var err = {
+                              keyword: 'type',
+                              dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].quit_signal',
+                              schemaPath: '#/definitions/ComposeAppNative/properties/quit_signal/type',
+                              params: {
+                                type: 'string'
+                              },
+                              message: 'should be string'
+                            };
+                            if (vErrors === null) vErrors = [err];
+                            else vErrors.push(err);
+                            errors++;
+                          }
+                          var schema5 = refVal1.properties.quit_signal.enum;
+                          var valid5;
+                          valid5 = false;
+                          for (var i5 = 0; i5 < schema5.length; i5++)
+                            if (equal(data3, schema5[i5])) {
+                              valid5 = true;
+                              break;
                             }
-                            if (valid6) {
-                              var data4 = data3.wait_for_ports;
-                              if (data4 === undefined) {
+                          if (!valid5) {
+                            var err = {
+                              keyword: 'enum',
+                              dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].quit_signal',
+                              schemaPath: '#/definitions/ComposeAppNative/properties/quit_signal/enum',
+                              params: {
+                                allowedValues: schema5
+                              },
+                              message: 'should be equal to one of the allowed values'
+                            };
+                            if (vErrors === null) vErrors = [err];
+                            else vErrors.push(err);
+                            errors++;
+                          }
+                          var valid5 = errors === errs_5;
+                        }
+                        if (valid5) {
+                          var data3 = data2.ready;
+                          if (data3 === undefined) {
+                            valid5 = true;
+                          } else {
+                            var errs_5 = errors;
+                            if ((data3 && typeof data3 === "object" && !Array.isArray(data3))) {
+                              var errs__5 = errors;
+                              var valid6 = true;
+                              if (data3.wait_for_log === undefined) {
                                 valid6 = true;
                               } else {
                                 var errs_6 = errors;
-                                var errs__6 = errors;
-                                var valid6 = false;
-                                var errs_7 = errors;
-                                if (Array.isArray(data4)) {
-                                  var errs__7 = errors;
-                                  var valid7;
-                                  for (var i7 = 0; i7 < data4.length; i7++) {
-                                    var errs_8 = errors;
-                                    if (typeof data4[i7] !== "string") {
-                                      var err = {
-                                        keyword: 'type',
-                                        dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].ready.wait_for_ports[' + i7 + ']',
-                                        schemaPath: '#/definitions/ComposeAppNative/properties/ready/properties/wait_for_ports/anyOf/0/items/type',
-                                        params: {
-                                          type: 'string'
-                                        },
-                                        message: 'should be string'
-                                      };
-                                      if (vErrors === null) vErrors = [err];
-                                      else vErrors.push(err);
-                                      errors++;
-                                    }
-                                    var valid8 = errors === errs_8;
-                                    if (!valid8) break;
-                                  }
-                                } else {
+                                if (typeof data3.wait_for_log !== "string") {
                                   var err = {
                                     keyword: 'type',
-                                    dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].ready.wait_for_ports',
-                                    schemaPath: '#/definitions/ComposeAppNative/properties/ready/properties/wait_for_ports/anyOf/0/type',
+                                    dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].ready.wait_for_log',
+                                    schemaPath: '#/definitions/ComposeAppNative/properties/ready/properties/wait_for_log/type',
                                     params: {
-                                      type: 'array'
+                                      type: 'string'
                                     },
-                                    message: 'should be array'
+                                    message: 'should be string'
                                   };
                                   if (vErrors === null) vErrors = [err];
                                   else vErrors.push(err);
                                   errors++;
                                 }
-                                var valid7 = errors === errs_7;
-                                valid6 = valid6 || valid7;
-                                if (!valid6) {
+                                var valid6 = errors === errs_6;
+                              }
+                              if (valid6) {
+                                var data4 = data3.wait_for_ports;
+                                if (data4 === undefined) {
+                                  valid6 = true;
+                                } else {
+                                  var errs_6 = errors;
+                                  var errs__6 = errors;
+                                  var valid6 = false;
                                   var errs_7 = errors;
-                                  if (typeof data4 !== "boolean") {
+                                  if (Array.isArray(data4)) {
+                                    var errs__7 = errors;
+                                    var valid7;
+                                    for (var i7 = 0; i7 < data4.length; i7++) {
+                                      var errs_8 = errors;
+                                      if (typeof data4[i7] !== "string") {
+                                        var err = {
+                                          keyword: 'type',
+                                          dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].ready.wait_for_ports[' + i7 + ']',
+                                          schemaPath: '#/definitions/ComposeAppNative/properties/ready/properties/wait_for_ports/anyOf/0/items/type',
+                                          params: {
+                                            type: 'string'
+                                          },
+                                          message: 'should be string'
+                                        };
+                                        if (vErrors === null) vErrors = [err];
+                                        else vErrors.push(err);
+                                        errors++;
+                                      }
+                                      var valid8 = errors === errs_8;
+                                      if (!valid8) break;
+                                    }
+                                  } else {
                                     var err = {
                                       keyword: 'type',
                                       dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].ready.wait_for_ports',
-                                      schemaPath: '#/definitions/ComposeAppNative/properties/ready/properties/wait_for_ports/anyOf/1/type',
+                                      schemaPath: '#/definitions/ComposeAppNative/properties/ready/properties/wait_for_ports/anyOf/0/type',
                                       params: {
-                                        type: 'boolean'
+                                        type: 'array'
                                       },
-                                      message: 'should be boolean'
+                                      message: 'should be array'
                                     };
                                     if (vErrors === null) vErrors = [err];
                                     else vErrors.push(err);
@@ -463,88 +472,107 @@ var validate = (function() {
                                   }
                                   var valid7 = errors === errs_7;
                                   valid6 = valid6 || valid7;
-                                }
-                                if (!valid6) {
-                                  var err = {
-                                    keyword: 'anyOf',
-                                    dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].ready.wait_for_ports',
-                                    schemaPath: '#/definitions/ComposeAppNative/properties/ready/properties/wait_for_ports/anyOf',
-                                    params: {},
-                                    message: 'should match some schema in anyOf'
-                                  };
-                                  if (vErrors === null) vErrors = [err];
-                                  else vErrors.push(err);
-                                  errors++;
-                                } else {
-                                  errors = errs__6;
-                                  if (vErrors !== null) {
-                                    if (errs__6) vErrors.length = errs__6;
-                                    else vErrors = null;
-                                  }
-                                }
-                                var valid6 = errors === errs_6;
-                              }
-                              if (valid6) {
-                                var data4 = data3.when_done;
-                                if (data4 === undefined) {
-                                  valid6 = true;
-                                } else {
-                                  var errs_6 = errors;
-                                  if (typeof data4 !== "boolean") {
-                                    var err = {
-                                      keyword: 'type',
-                                      dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].ready.when_done',
-                                      schemaPath: '#/definitions/ComposeAppNative/properties/ready/properties/when_done/type',
-                                      params: {
-                                        type: 'boolean'
-                                      },
-                                      message: 'should be boolean'
-                                    };
-                                    if (vErrors === null) vErrors = [err];
-                                    else vErrors.push(err);
-                                    errors++;
-                                  }
-                                  var schema6 = refVal1.properties.ready.properties.when_done.enum;
-                                  var valid6;
-                                  valid6 = false;
-                                  for (var i6 = 0; i6 < schema6.length; i6++)
-                                    if (equal(data4, schema6[i6])) {
-                                      valid6 = true;
-                                      break;
+                                  if (!valid6) {
+                                    var errs_7 = errors;
+                                    if (typeof data4 !== "boolean") {
+                                      var err = {
+                                        keyword: 'type',
+                                        dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].ready.wait_for_ports',
+                                        schemaPath: '#/definitions/ComposeAppNative/properties/ready/properties/wait_for_ports/anyOf/1/type',
+                                        params: {
+                                          type: 'boolean'
+                                        },
+                                        message: 'should be boolean'
+                                      };
+                                      if (vErrors === null) vErrors = [err];
+                                      else vErrors.push(err);
+                                      errors++;
                                     }
+                                    var valid7 = errors === errs_7;
+                                    valid6 = valid6 || valid7;
+                                  }
                                   if (!valid6) {
                                     var err = {
-                                      keyword: 'enum',
-                                      dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].ready.when_done',
-                                      schemaPath: '#/definitions/ComposeAppNative/properties/ready/properties/when_done/enum',
-                                      params: {
-                                        allowedValues: schema6
-                                      },
-                                      message: 'should be equal to one of the allowed values'
+                                      keyword: 'anyOf',
+                                      dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].ready.wait_for_ports',
+                                      schemaPath: '#/definitions/ComposeAppNative/properties/ready/properties/wait_for_ports/anyOf',
+                                      params: {},
+                                      message: 'should match some schema in anyOf'
                                     };
                                     if (vErrors === null) vErrors = [err];
                                     else vErrors.push(err);
                                     errors++;
+                                  } else {
+                                    errors = errs__6;
+                                    if (vErrors !== null) {
+                                      if (errs__6) vErrors.length = errs__6;
+                                      else vErrors = null;
+                                    }
                                   }
                                   var valid6 = errors === errs_6;
                                 }
+                                if (valid6) {
+                                  var data4 = data3.when_done;
+                                  if (data4 === undefined) {
+                                    valid6 = true;
+                                  } else {
+                                    var errs_6 = errors;
+                                    if (typeof data4 !== "boolean") {
+                                      var err = {
+                                        keyword: 'type',
+                                        dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].ready.when_done',
+                                        schemaPath: '#/definitions/ComposeAppNative/properties/ready/properties/when_done/type',
+                                        params: {
+                                          type: 'boolean'
+                                        },
+                                        message: 'should be boolean'
+                                      };
+                                      if (vErrors === null) vErrors = [err];
+                                      else vErrors.push(err);
+                                      errors++;
+                                    }
+                                    var schema6 = refVal1.properties.ready.properties.when_done.enum;
+                                    var valid6;
+                                    valid6 = false;
+                                    for (var i6 = 0; i6 < schema6.length; i6++)
+                                      if (equal(data4, schema6[i6])) {
+                                        valid6 = true;
+                                        break;
+                                      }
+                                    if (!valid6) {
+                                      var err = {
+                                        keyword: 'enum',
+                                        dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].ready.when_done',
+                                        schemaPath: '#/definitions/ComposeAppNative/properties/ready/properties/when_done/enum',
+                                        params: {
+                                          allowedValues: schema6
+                                        },
+                                        message: 'should be equal to one of the allowed values'
+                                      };
+                                      if (vErrors === null) vErrors = [err];
+                                      else vErrors.push(err);
+                                      errors++;
+                                    }
+                                    var valid6 = errors === errs_6;
+                                  }
+                                }
                               }
+                            } else {
+                              var err = {
+                                keyword: 'type',
+                                dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].ready',
+                                schemaPath: '#/definitions/ComposeAppNative/properties/ready/type',
+                                params: {
+                                  type: 'object'
+                                },
+                                message: 'should be object'
+                              };
+                              if (vErrors === null) vErrors = [err];
+                              else vErrors.push(err);
+                              errors++;
                             }
-                          } else {
-                            var err = {
-                              keyword: 'type',
-                              dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].ready',
-                              schemaPath: '#/definitions/ComposeAppNative/properties/ready/type',
-                              params: {
-                                type: 'object'
-                              },
-                              message: 'should be object'
-                            };
-                            if (vErrors === null) vErrors = [err];
-                            else vErrors.push(err);
-                            errors++;
+                            var valid5 = errors === errs_5;
                           }
-                          var valid5 = errors === errs_5;
                         }
                       }
                     }
@@ -883,15 +911,15 @@ var validate = (function() {
                               var valid5 = errors === errs_5;
                             }
                             if (valid5) {
-                              if (data2.image === undefined) {
+                              if (data2.group === undefined) {
                                 valid5 = true;
                               } else {
                                 var errs_5 = errors;
-                                if (typeof data2.image !== "string") {
+                                if (typeof data2.group !== "string") {
                                   var err = {
                                     keyword: 'type',
-                                    dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].image',
-                                    schemaPath: '#/definitions/ComposeAppDocker/properties/image/type',
+                                    dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].group',
+                                    schemaPath: '#/definitions/ComposeAppDocker/properties/group/type',
                                     params: {
                                       type: 'string'
                                     },
@@ -904,43 +932,19 @@ var validate = (function() {
                                 var valid5 = errors === errs_5;
                               }
                               if (valid5) {
-                                var data3 = data2.ports;
-                                if (data3 === undefined) {
+                                if (data2.image === undefined) {
                                   valid5 = true;
                                 } else {
                                   var errs_5 = errors;
-                                  if (Array.isArray(data3)) {
-                                    var errs__5 = errors;
-                                    var valid5;
-                                    for (var i5 = 0; i5 < data3.length; i5++) {
-                                      var data4 = data3[i5];
-                                      var errs_6 = errors;
-                                      if (typeof data4 !== "string" && typeof data4 !== "number") {
-                                        var err = {
-                                          keyword: 'type',
-                                          dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].ports[' + i5 + ']',
-                                          schemaPath: '#/definitions/ComposeAppDocker/properties/ports/items/type',
-                                          params: {
-                                            type: 'string,number'
-                                          },
-                                          message: 'should be string,number'
-                                        };
-                                        if (vErrors === null) vErrors = [err];
-                                        else vErrors.push(err);
-                                        errors++;
-                                      }
-                                      var valid6 = errors === errs_6;
-                                      if (!valid6) break;
-                                    }
-                                  } else {
+                                  if (typeof data2.image !== "string") {
                                     var err = {
                                       keyword: 'type',
-                                      dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].ports',
-                                      schemaPath: '#/definitions/ComposeAppDocker/properties/ports/type',
+                                      dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].image',
+                                      schemaPath: '#/definitions/ComposeAppDocker/properties/image/type',
                                       params: {
-                                        type: 'array'
+                                        type: 'string'
                                       },
-                                      message: 'should be array'
+                                      message: 'should be string'
                                     };
                                     if (vErrors === null) vErrors = [err];
                                     else vErrors.push(err);
@@ -949,42 +953,43 @@ var validate = (function() {
                                   var valid5 = errors === errs_5;
                                 }
                                 if (valid5) {
-                                  var data3 = data2.quit_signal;
+                                  var data3 = data2.ports;
                                   if (data3 === undefined) {
                                     valid5 = true;
                                   } else {
                                     var errs_5 = errors;
-                                    if (typeof data3 !== "string") {
+                                    if (Array.isArray(data3)) {
+                                      var errs__5 = errors;
+                                      var valid5;
+                                      for (var i5 = 0; i5 < data3.length; i5++) {
+                                        var data4 = data3[i5];
+                                        var errs_6 = errors;
+                                        if (typeof data4 !== "string" && typeof data4 !== "number") {
+                                          var err = {
+                                            keyword: 'type',
+                                            dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].ports[' + i5 + ']',
+                                            schemaPath: '#/definitions/ComposeAppDocker/properties/ports/items/type',
+                                            params: {
+                                              type: 'string,number'
+                                            },
+                                            message: 'should be string,number'
+                                          };
+                                          if (vErrors === null) vErrors = [err];
+                                          else vErrors.push(err);
+                                          errors++;
+                                        }
+                                        var valid6 = errors === errs_6;
+                                        if (!valid6) break;
+                                      }
+                                    } else {
                                       var err = {
                                         keyword: 'type',
-                                        dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].quit_signal',
-                                        schemaPath: '#/definitions/ComposeAppDocker/properties/quit_signal/type',
+                                        dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].ports',
+                                        schemaPath: '#/definitions/ComposeAppDocker/properties/ports/type',
                                         params: {
-                                          type: 'string'
+                                          type: 'array'
                                         },
-                                        message: 'should be string'
-                                      };
-                                      if (vErrors === null) vErrors = [err];
-                                      else vErrors.push(err);
-                                      errors++;
-                                    }
-                                    var schema5 = refVal2.properties.quit_signal.enum;
-                                    var valid5;
-                                    valid5 = false;
-                                    for (var i5 = 0; i5 < schema5.length; i5++)
-                                      if (equal(data3, schema5[i5])) {
-                                        valid5 = true;
-                                        break;
-                                      }
-                                    if (!valid5) {
-                                      var err = {
-                                        keyword: 'enum',
-                                        dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].quit_signal',
-                                        schemaPath: '#/definitions/ComposeAppDocker/properties/quit_signal/enum',
-                                        params: {
-                                          allowedValues: schema5
-                                        },
-                                        message: 'should be equal to one of the allowed values'
+                                        message: 'should be array'
                                       };
                                       if (vErrors === null) vErrors = [err];
                                       else vErrors.push(err);
@@ -993,175 +998,42 @@ var validate = (function() {
                                     var valid5 = errors === errs_5;
                                   }
                                   if (valid5) {
-                                    var data3 = data2.ready;
+                                    var data3 = data2.quit_signal;
                                     if (data3 === undefined) {
                                       valid5 = true;
                                     } else {
                                       var errs_5 = errors;
-                                      if ((data3 && typeof data3 === "object" && !Array.isArray(data3))) {
-                                        var errs__5 = errors;
-                                        var valid6 = true;
-                                        if (data3.wait_for_log === undefined) {
-                                          valid6 = true;
-                                        } else {
-                                          var errs_6 = errors;
-                                          if (typeof data3.wait_for_log !== "string") {
-                                            var err = {
-                                              keyword: 'type',
-                                              dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].ready.wait_for_log',
-                                              schemaPath: '#/definitions/ComposeAppDocker/properties/ready/properties/wait_for_log/type',
-                                              params: {
-                                                type: 'string'
-                                              },
-                                              message: 'should be string'
-                                            };
-                                            if (vErrors === null) vErrors = [err];
-                                            else vErrors.push(err);
-                                            errors++;
-                                          }
-                                          var valid6 = errors === errs_6;
-                                        }
-                                        if (valid6) {
-                                          var data4 = data3.wait_for_ports;
-                                          if (data4 === undefined) {
-                                            valid6 = true;
-                                          } else {
-                                            var errs_6 = errors;
-                                            var errs__6 = errors;
-                                            var valid6 = false;
-                                            var errs_7 = errors;
-                                            if (Array.isArray(data4)) {
-                                              var errs__7 = errors;
-                                              var valid7;
-                                              for (var i7 = 0; i7 < data4.length; i7++) {
-                                                var errs_8 = errors;
-                                                if (typeof data4[i7] !== "string") {
-                                                  var err = {
-                                                    keyword: 'type',
-                                                    dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].ready.wait_for_ports[' + i7 + ']',
-                                                    schemaPath: '#/definitions/ComposeAppDocker/properties/ready/properties/wait_for_ports/anyOf/0/items/type',
-                                                    params: {
-                                                      type: 'string'
-                                                    },
-                                                    message: 'should be string'
-                                                  };
-                                                  if (vErrors === null) vErrors = [err];
-                                                  else vErrors.push(err);
-                                                  errors++;
-                                                }
-                                                var valid8 = errors === errs_8;
-                                                if (!valid8) break;
-                                              }
-                                            } else {
-                                              var err = {
-                                                keyword: 'type',
-                                                dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].ready.wait_for_ports',
-                                                schemaPath: '#/definitions/ComposeAppDocker/properties/ready/properties/wait_for_ports/anyOf/0/type',
-                                                params: {
-                                                  type: 'array'
-                                                },
-                                                message: 'should be array'
-                                              };
-                                              if (vErrors === null) vErrors = [err];
-                                              else vErrors.push(err);
-                                              errors++;
-                                            }
-                                            var valid7 = errors === errs_7;
-                                            valid6 = valid6 || valid7;
-                                            if (!valid6) {
-                                              var errs_7 = errors;
-                                              if (typeof data4 !== "boolean") {
-                                                var err = {
-                                                  keyword: 'type',
-                                                  dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].ready.wait_for_ports',
-                                                  schemaPath: '#/definitions/ComposeAppDocker/properties/ready/properties/wait_for_ports/anyOf/1/type',
-                                                  params: {
-                                                    type: 'boolean'
-                                                  },
-                                                  message: 'should be boolean'
-                                                };
-                                                if (vErrors === null) vErrors = [err];
-                                                else vErrors.push(err);
-                                                errors++;
-                                              }
-                                              var valid7 = errors === errs_7;
-                                              valid6 = valid6 || valid7;
-                                            }
-                                            if (!valid6) {
-                                              var err = {
-                                                keyword: 'anyOf',
-                                                dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].ready.wait_for_ports',
-                                                schemaPath: '#/definitions/ComposeAppDocker/properties/ready/properties/wait_for_ports/anyOf',
-                                                params: {},
-                                                message: 'should match some schema in anyOf'
-                                              };
-                                              if (vErrors === null) vErrors = [err];
-                                              else vErrors.push(err);
-                                              errors++;
-                                            } else {
-                                              errors = errs__6;
-                                              if (vErrors !== null) {
-                                                if (errs__6) vErrors.length = errs__6;
-                                                else vErrors = null;
-                                              }
-                                            }
-                                            var valid6 = errors === errs_6;
-                                          }
-                                          if (valid6) {
-                                            var data4 = data3.when_done;
-                                            if (data4 === undefined) {
-                                              valid6 = true;
-                                            } else {
-                                              var errs_6 = errors;
-                                              if (typeof data4 !== "boolean") {
-                                                var err = {
-                                                  keyword: 'type',
-                                                  dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].ready.when_done',
-                                                  schemaPath: '#/definitions/ComposeAppDocker/properties/ready/properties/when_done/type',
-                                                  params: {
-                                                    type: 'boolean'
-                                                  },
-                                                  message: 'should be boolean'
-                                                };
-                                                if (vErrors === null) vErrors = [err];
-                                                else vErrors.push(err);
-                                                errors++;
-                                              }
-                                              var schema6 = refVal2.properties.ready.properties.when_done.enum;
-                                              var valid6;
-                                              valid6 = false;
-                                              for (var i6 = 0; i6 < schema6.length; i6++)
-                                                if (equal(data4, schema6[i6])) {
-                                                  valid6 = true;
-                                                  break;
-                                                }
-                                              if (!valid6) {
-                                                var err = {
-                                                  keyword: 'enum',
-                                                  dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].ready.when_done',
-                                                  schemaPath: '#/definitions/ComposeAppDocker/properties/ready/properties/when_done/enum',
-                                                  params: {
-                                                    allowedValues: schema6
-                                                  },
-                                                  message: 'should be equal to one of the allowed values'
-                                                };
-                                                if (vErrors === null) vErrors = [err];
-                                                else vErrors.push(err);
-                                                errors++;
-                                              }
-                                              var valid6 = errors === errs_6;
-                                            }
-                                          }
-                                        }
-                                      } else {
+                                      if (typeof data3 !== "string") {
                                         var err = {
                                           keyword: 'type',
-                                          dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].ready',
-                                          schemaPath: '#/definitions/ComposeAppDocker/properties/ready/type',
+                                          dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].quit_signal',
+                                          schemaPath: '#/definitions/ComposeAppDocker/properties/quit_signal/type',
                                           params: {
-                                            type: 'object'
+                                            type: 'string'
                                           },
-                                          message: 'should be object'
+                                          message: 'should be string'
+                                        };
+                                        if (vErrors === null) vErrors = [err];
+                                        else vErrors.push(err);
+                                        errors++;
+                                      }
+                                      var schema5 = refVal2.properties.quit_signal.enum;
+                                      var valid5;
+                                      valid5 = false;
+                                      for (var i5 = 0; i5 < schema5.length; i5++)
+                                        if (equal(data3, schema5[i5])) {
+                                          valid5 = true;
+                                          break;
+                                        }
+                                      if (!valid5) {
+                                        var err = {
+                                          keyword: 'enum',
+                                          dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].quit_signal',
+                                          schemaPath: '#/definitions/ComposeAppDocker/properties/quit_signal/enum',
+                                          params: {
+                                            allowedValues: schema5
+                                          },
+                                          message: 'should be equal to one of the allowed values'
                                         };
                                         if (vErrors === null) vErrors = [err];
                                         else vErrors.push(err);
@@ -1170,21 +1042,23 @@ var validate = (function() {
                                       var valid5 = errors === errs_5;
                                     }
                                     if (valid5) {
-                                      var data3 = data2.volumes;
+                                      var data3 = data2.ready;
                                       if (data3 === undefined) {
                                         valid5 = true;
                                       } else {
                                         var errs_5 = errors;
-                                        if (Array.isArray(data3)) {
+                                        if ((data3 && typeof data3 === "object" && !Array.isArray(data3))) {
                                           var errs__5 = errors;
-                                          var valid5;
-                                          for (var i5 = 0; i5 < data3.length; i5++) {
+                                          var valid6 = true;
+                                          if (data3.wait_for_log === undefined) {
+                                            valid6 = true;
+                                          } else {
                                             var errs_6 = errors;
-                                            if (typeof data3[i5] !== "string") {
+                                            if (typeof data3.wait_for_log !== "string") {
                                               var err = {
                                                 keyword: 'type',
-                                                dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].volumes[' + i5 + ']',
-                                                schemaPath: '#/definitions/ComposeAppDocker/properties/volumes/items/type',
+                                                dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].ready.wait_for_log',
+                                                schemaPath: '#/definitions/ComposeAppDocker/properties/ready/properties/wait_for_log/type',
                                                 params: {
                                                   type: 'string'
                                                 },
@@ -1195,23 +1069,199 @@ var validate = (function() {
                                               errors++;
                                             }
                                             var valid6 = errors === errs_6;
-                                            if (!valid6) break;
+                                          }
+                                          if (valid6) {
+                                            var data4 = data3.wait_for_ports;
+                                            if (data4 === undefined) {
+                                              valid6 = true;
+                                            } else {
+                                              var errs_6 = errors;
+                                              var errs__6 = errors;
+                                              var valid6 = false;
+                                              var errs_7 = errors;
+                                              if (Array.isArray(data4)) {
+                                                var errs__7 = errors;
+                                                var valid7;
+                                                for (var i7 = 0; i7 < data4.length; i7++) {
+                                                  var errs_8 = errors;
+                                                  if (typeof data4[i7] !== "string") {
+                                                    var err = {
+                                                      keyword: 'type',
+                                                      dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].ready.wait_for_ports[' + i7 + ']',
+                                                      schemaPath: '#/definitions/ComposeAppDocker/properties/ready/properties/wait_for_ports/anyOf/0/items/type',
+                                                      params: {
+                                                        type: 'string'
+                                                      },
+                                                      message: 'should be string'
+                                                    };
+                                                    if (vErrors === null) vErrors = [err];
+                                                    else vErrors.push(err);
+                                                    errors++;
+                                                  }
+                                                  var valid8 = errors === errs_8;
+                                                  if (!valid8) break;
+                                                }
+                                              } else {
+                                                var err = {
+                                                  keyword: 'type',
+                                                  dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].ready.wait_for_ports',
+                                                  schemaPath: '#/definitions/ComposeAppDocker/properties/ready/properties/wait_for_ports/anyOf/0/type',
+                                                  params: {
+                                                    type: 'array'
+                                                  },
+                                                  message: 'should be array'
+                                                };
+                                                if (vErrors === null) vErrors = [err];
+                                                else vErrors.push(err);
+                                                errors++;
+                                              }
+                                              var valid7 = errors === errs_7;
+                                              valid6 = valid6 || valid7;
+                                              if (!valid6) {
+                                                var errs_7 = errors;
+                                                if (typeof data4 !== "boolean") {
+                                                  var err = {
+                                                    keyword: 'type',
+                                                    dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].ready.wait_for_ports',
+                                                    schemaPath: '#/definitions/ComposeAppDocker/properties/ready/properties/wait_for_ports/anyOf/1/type',
+                                                    params: {
+                                                      type: 'boolean'
+                                                    },
+                                                    message: 'should be boolean'
+                                                  };
+                                                  if (vErrors === null) vErrors = [err];
+                                                  else vErrors.push(err);
+                                                  errors++;
+                                                }
+                                                var valid7 = errors === errs_7;
+                                                valid6 = valid6 || valid7;
+                                              }
+                                              if (!valid6) {
+                                                var err = {
+                                                  keyword: 'anyOf',
+                                                  dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].ready.wait_for_ports',
+                                                  schemaPath: '#/definitions/ComposeAppDocker/properties/ready/properties/wait_for_ports/anyOf',
+                                                  params: {},
+                                                  message: 'should match some schema in anyOf'
+                                                };
+                                                if (vErrors === null) vErrors = [err];
+                                                else vErrors.push(err);
+                                                errors++;
+                                              } else {
+                                                errors = errs__6;
+                                                if (vErrors !== null) {
+                                                  if (errs__6) vErrors.length = errs__6;
+                                                  else vErrors = null;
+                                                }
+                                              }
+                                              var valid6 = errors === errs_6;
+                                            }
+                                            if (valid6) {
+                                              var data4 = data3.when_done;
+                                              if (data4 === undefined) {
+                                                valid6 = true;
+                                              } else {
+                                                var errs_6 = errors;
+                                                if (typeof data4 !== "boolean") {
+                                                  var err = {
+                                                    keyword: 'type',
+                                                    dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].ready.when_done',
+                                                    schemaPath: '#/definitions/ComposeAppDocker/properties/ready/properties/when_done/type',
+                                                    params: {
+                                                      type: 'boolean'
+                                                    },
+                                                    message: 'should be boolean'
+                                                  };
+                                                  if (vErrors === null) vErrors = [err];
+                                                  else vErrors.push(err);
+                                                  errors++;
+                                                }
+                                                var schema6 = refVal2.properties.ready.properties.when_done.enum;
+                                                var valid6;
+                                                valid6 = false;
+                                                for (var i6 = 0; i6 < schema6.length; i6++)
+                                                  if (equal(data4, schema6[i6])) {
+                                                    valid6 = true;
+                                                    break;
+                                                  }
+                                                if (!valid6) {
+                                                  var err = {
+                                                    keyword: 'enum',
+                                                    dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].ready.when_done',
+                                                    schemaPath: '#/definitions/ComposeAppDocker/properties/ready/properties/when_done/enum',
+                                                    params: {
+                                                      allowedValues: schema6
+                                                    },
+                                                    message: 'should be equal to one of the allowed values'
+                                                  };
+                                                  if (vErrors === null) vErrors = [err];
+                                                  else vErrors.push(err);
+                                                  errors++;
+                                                }
+                                                var valid6 = errors === errs_6;
+                                              }
+                                            }
                                           }
                                         } else {
                                           var err = {
                                             keyword: 'type',
-                                            dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].volumes',
-                                            schemaPath: '#/definitions/ComposeAppDocker/properties/volumes/type',
+                                            dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].ready',
+                                            schemaPath: '#/definitions/ComposeAppDocker/properties/ready/type',
                                             params: {
-                                              type: 'array'
+                                              type: 'object'
                                             },
-                                            message: 'should be array'
+                                            message: 'should be object'
                                           };
                                           if (vErrors === null) vErrors = [err];
                                           else vErrors.push(err);
                                           errors++;
                                         }
                                         var valid5 = errors === errs_5;
+                                      }
+                                      if (valid5) {
+                                        var data3 = data2.volumes;
+                                        if (data3 === undefined) {
+                                          valid5 = true;
+                                        } else {
+                                          var errs_5 = errors;
+                                          if (Array.isArray(data3)) {
+                                            var errs__5 = errors;
+                                            var valid5;
+                                            for (var i5 = 0; i5 < data3.length; i5++) {
+                                              var errs_6 = errors;
+                                              if (typeof data3[i5] !== "string") {
+                                                var err = {
+                                                  keyword: 'type',
+                                                  dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].volumes[' + i5 + ']',
+                                                  schemaPath: '#/definitions/ComposeAppDocker/properties/volumes/items/type',
+                                                  params: {
+                                                    type: 'string'
+                                                  },
+                                                  message: 'should be string'
+                                                };
+                                                if (vErrors === null) vErrors = [err];
+                                                else vErrors.push(err);
+                                                errors++;
+                                              }
+                                              var valid6 = errors === errs_6;
+                                              if (!valid6) break;
+                                            }
+                                          } else {
+                                            var err = {
+                                              keyword: 'type',
+                                              dataPath: (dataPath || '') + '.apps[\'' + key1 + '\'].volumes',
+                                              schemaPath: '#/definitions/ComposeAppDocker/properties/volumes/type',
+                                              params: {
+                                                type: 'array'
+                                              },
+                                              message: 'should be array'
+                                            };
+                                            if (vErrors === null) vErrors = [err];
+                                            else vErrors.push(err);
+                                            errors++;
+                                          }
+                                          var valid5 = errors === errs_5;
+                                        }
                                       }
                                     }
                                   }
@@ -1386,6 +1436,9 @@ validate.schema = {
           },
           "type": "object"
         },
+        "group": {
+          "type": "string"
+        },
         "image": {
           "type": "string"
         },
@@ -1452,6 +1505,9 @@ validate.schema = {
             "type": ["string", "number", "boolean"]
           },
           "type": "object"
+        },
+        "group": {
+          "type": "string"
         },
         "quit_signal": {
           "enum": ["SIGINT", "SIGKILL", "SIGTERM"],

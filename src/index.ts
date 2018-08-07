@@ -70,8 +70,8 @@ const processes = new Map<string, Process>();
 function createProcesses({ groups }: { groups: [string] }) {
   return Promise.all(Object.keys(apps).map(async appName => {
     const appEntry = apps[appName];
-    const group = appEntry.group || 'default';
-    if(!groups.includes(group)) {
+    const group = appEntry.group;
+    if(group && !groups.includes(group)) {
       return;
     }
     const proc = await createProcess(appName, cwd, appEntry);

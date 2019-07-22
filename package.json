@@ -24,7 +24,7 @@
     "js-yaml": "^3.12.0",
     "lodash": "^4.17.10",
     "memoizee": "^0.4.12",
-    "node-pty": "microsoft/node-pty#32ea3e47791794a82c58c76bf83dc4d441a93108",
+    "node-pty": "0.9.0-beta19",
     "ps-tree": "^1.1.0",
     "rxjs": "^6.2.2",
     "split": "^1.0.1",

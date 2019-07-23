@@ -1,6 +1,6 @@
 import Bluebird from 'bluebird';
 import * as pty from 'node-pty';
-import { ITerminal, ProcessEnv } from 'node-pty/lib/interfaces';
+import { IPty } from 'node-pty';
 import { platform } from 'os';
 import { Stream } from 'stream';
 import { Process, ProcessEnvironment, ProcessSignals } from './process';
@@ -14,6 +14,10 @@ const termColumns = process.stdout.columns || 80;
 const termRows = process.stdout.rows || 30;
 
 const shell = platform() === 'win32' ? 'powershell.exe' : '/bin/sh';
+
+interface ProcessEnv {
+  [key: string]: string;
+}
 
 export interface NativeProcessEntry {
   command: string;
@@ -43,7 +47,7 @@ export function spawn(cwd: string, command: string, options: SpawnOptions = {}) 
 }
 
 export class NativeProcess extends Process {
-  proc: ITerminal | null = null;
+  proc: IPty | null = null;
 
   constructor(name: string, private cwd: string, private options: NativeProcessEntry) {
     super(name);
@@ -60,7 +64,7 @@ export class NativeProcess extends Process {
     this.emit('output', this.proc as any as Stream);
     const exitObservable = new Subject();
 
-    this.proc.once('exit', exitCode => {
+    this.proc.on('exit', exitCode => {
       this.emit('exit', exitCode);
       exitObservable.next();
     });
